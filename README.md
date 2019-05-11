@@ -1,26 +1,37 @@
 # flyredis
 
-##### redisgo
+#### example
+
 ```go
-conn = redis.Conn{...}
-
+//redisgo
+data, err := conn.Do("GET", "key")
+//flyredis
+data, err := conn.Do("GET", "key").Interface()
+```
+```go
+//redisgo
 data, err := redis.String(conn.Do("GET", "key"))
-
-data, err = conn.Do("GET", "key")
+//flyredis
+data, err := conn.DO("GET", "key").String()
 ```
 
-##### flyredis
+```go
+//flyredis
+data, err := conn.Do("GET", "key").Bool()
+data, err := conn.Do("GET", "key").Int()
+data, err := conn.DO("GET", "key").String()
+data, err := conn.Do("GET", "key").Ints()
+data, err := conn.DO("GET", "key").Strings()
+data, err := conn.DO("GET", "key").Values()
+......
+```
 
 ```go
-conn = flyredis.Get()
-
-data, err := conn.Do("GET", "key").String()
-// or
-data, err = conn.GET("key").String()
-
-data, err = conn.Do("GET", "key").Interface()
-// or
-data, err = conn.GET("key").Interface()
+//flyredis
+data, err := conn.GET("key")
+data, err := conn.SET("key", "value")
+data, err := conn.HGET("key", "field")
+data, err := conn.HSET("key", "filed", "value")
 ```
 
 ### 注意
@@ -40,7 +51,5 @@ pool := flyredis.NewPool(&redis.Pool{
 ```go
 conn := pool.Get()
 defer conn.Close()
-data, err := pool.GET("key").String()
+data, err := conn.GET("key").String()
 ```
-
- 

@@ -22,10 +22,9 @@ type Pool struct {
 	inner *redis.Pool
 }
 
-
 type Result struct {
 	reply interface{}
-	err error
+	err   error
 }
 
 type Interface interface {
@@ -120,14 +119,14 @@ func SADD(args ...interface{}) Result {
 	return c.SADD(args...)
 }
 
-func  Do(commandName string, args ...interface{}) Result {
+func Do(commandName string, args ...interface{}) Result {
 	c := defaultPool.Get()
 	defer c.Close()
 	return c.Do(commandName, args...)
 }
 
-func  Send(commandName string, args ...interface{}) error{
+func Send(commandName string, args ...interface{}) error {
 	c := defaultPool.Get()
 	defer c.Close()
-	return  c.Send(commandName, args...)
+	return c.Send(commandName, args...)
 }
