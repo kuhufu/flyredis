@@ -20,9 +20,9 @@ data, err := conn.DO("GET", "key").String()
 data, err := conn.Do("GET", "key").Bool()
 data, err := conn.Do("GET", "key").Int()
 data, err := conn.DO("GET", "key").String()
-data, err := conn.Do("GET", "key").Ints()
-data, err := conn.DO("GET", "key").Strings()
-data, err := conn.DO("GET", "key").Values()
+data, err := conn.Do("HGETALL", "key").Ints()
+data, err := conn.DO("HGETALL", "key").Strings()
+data, err := conn.DO("HGETALL", "key").Values()
 ......
 ```
 
