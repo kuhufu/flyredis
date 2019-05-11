@@ -6,7 +6,7 @@ conn = redis.Conn{...}
 
 data, err := redis.String(conn.Do("GET", "key"))
 
-data, err := conn.Do("GET", "key")
+data, err = conn.Do("GET", "key")
 ```
 
 ##### flyredis
