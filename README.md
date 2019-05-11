@@ -24,7 +24,8 @@ data, err = conn.GET("key").Interface()
 ```
 
 ### 注意
-flyredis 有一个内置的 redis连接池 只连接本地 `127.0.0.1:6379` 的无密码 redis 服务，方便于开发测试
+flyredis 有一个内置的 redis连接池 只连接本地 `127.0.0.1:6379` 的无密码 redis 服务，方便开发测试。
+
 在生产环境中请使用如下方式
 ```go
 pool := flyredis.NewPool(&redis.Pool{
