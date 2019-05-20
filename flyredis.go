@@ -14,19 +14,6 @@ var defaultPool = Pool{&redis.Pool{
 	},
 }}
 
-type Conn struct {
-	redis.Conn
-}
-
-type Pool struct {
-	inner *redis.Pool
-}
-
-type Result struct {
-	reply interface{}
-	err   error
-}
-
 type Interface interface {
 	GET(args ...interface{}) Result
 	SET(args ...interface{}) Result
@@ -43,6 +30,7 @@ type Interface interface {
 	SADD(args ...interface{}) Result
 
 	Do(commandName string, args ...interface{}) Result
+	Send(commandName string, args ...interface{}) error
 }
 
 func NewPool(pool *redis.Pool) *Pool {
@@ -54,79 +42,55 @@ func Get() Conn {
 }
 
 func GET(args ...interface{}) Result {
-	c := defaultPool.Get()
-	defer c.Close()
-	return c.GET(args...)
+	return defaultPool.GET(args...)
 }
 
 func SET(args ...interface{}) Result {
-	c := defaultPool.Get()
-	defer c.Close()
-	return c.SET(args...)
+	return defaultPool.SET(args...)
 }
 
 func HGET(args ...interface{}) Result {
-	c := defaultPool.Get()
-	defer c.Close()
-	return c.HGET(args...)
+	return defaultPool.HGET(args...)
 }
 
 func HSET(args ...interface{}) Result {
-	c := defaultPool.Get()
-	defer c.Close()
-	return c.HSET(args...)
+	return defaultPool.HSET(args...)
 }
 
 func HSETNX(args ...interface{}) Result {
 	c := Get()
 	defer c.Close()
-	return c.HSETNX(args...)
+	return defaultPool.HSETNX(args...)
 }
 
 func HGETALL(args ...interface{}) Result {
-	c := defaultPool.Get()
-	defer c.Close()
-	return c.HGETALL(args...)
+	return defaultPool.HGETALL(args...)
 }
 
 func HVALS(args ...interface{}) Result {
-	c := defaultPool.Get()
-	defer c.Close()
-	return c.HVALS(args...)
+	return defaultPool.HVALS(args...)
 }
 
 func HEXISTS(args ...interface{}) Result {
-	c := defaultPool.Get()
-	defer c.Close()
-	return c.HEXISTS(args...)
+	return defaultPool.HEXISTS(args...)
 }
 
 func HDEL(args ...interface{}) Result {
-	c := defaultPool.Get()
-	defer c.Close()
-	return c.HDEL(args...)
+	return defaultPool.HDEL(args...)
 }
 
 func SISMEMBER(args ...interface{}) Result {
-	c := defaultPool.Get()
-	defer c.Close()
-	return c.SISMEMBER(args...)
+	return defaultPool.SISMEMBER(args...)
 }
 
 func SADD(args ...interface{}) Result {
-	c := defaultPool.Get()
-	defer c.Close()
-	return c.SADD(args...)
+	return defaultPool.SADD(args...)
 }
 
 func Do(commandName string, args ...interface{}) Result {
-	c := defaultPool.Get()
-	defer c.Close()
-	return c.Do(commandName, args...)
+	return defaultPool.Do(commandName, args...)
 }
 
 func Send(commandName string, args ...interface{}) error {
-	c := defaultPool.Get()
-	defer c.Close()
-	return c.Send(commandName, args...)
+	return defaultPool.Send(commandName, args...)
 }

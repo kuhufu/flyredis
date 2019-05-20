@@ -1,5 +1,11 @@
 package flyredis
 
+import "github.com/gomodule/redigo/redis"
+
+type Conn struct {
+	redis.Conn
+}
+
 func (c *Conn) GET(args ...interface{}) Result {
 	reply, err := c.Conn.Do("GET", args...)
 	return Result{reply: reply, err: err}
