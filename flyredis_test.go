@@ -6,8 +6,8 @@ import (
 	"testing"
 )
 
-func TestNewPoolWith(t *testing.T) {
-	p := NewPoolWith(Opt{
+func TestNewPool(t *testing.T) {
+	p := NewPool(&redis.Pool{
 		MaxIdle:     20,
 		MaxActive:   10,
 		IdleTimeout: 30,

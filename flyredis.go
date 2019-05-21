@@ -30,18 +30,6 @@ func NewPool(pool *redis.Pool) *Pool {
 	return &Pool{pool}
 }
 
-func NewPoolWith(opt Opt) *Pool {
-	return NewPool(&redis.Pool{
-		Dial:            opt.Dial,
-		DialContext:     opt.DialContext,
-		TestOnBorrow:    opt.TestOnBorrow,
-		MaxIdle:         opt.MaxIdle,
-		MaxActive:       opt.MaxActive,
-		Wait:            opt.Wait,
-		MaxConnLifetime: opt.MaxConnLifetime,
-	})
-}
-
 func Get() Conn {
 	return defaultPool.Get()
 }
