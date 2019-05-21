@@ -6,6 +6,11 @@ type Conn struct {
 	redis.Conn
 }
 
+func (c *Conn) Do(commandName string, args ...interface{}) Result {
+	reply, err := c.Conn.Do(commandName, args...)
+	return Result{reply: reply, err: err}
+}
+
 func (c *Conn) GET(args ...interface{}) Result {
 	reply, err := c.Conn.Do("GET", args...)
 	return Result{reply: reply, err: err}
@@ -13,6 +18,11 @@ func (c *Conn) GET(args ...interface{}) Result {
 
 func (c *Conn) SET(args ...interface{}) Result {
 	reply, err := c.Conn.Do("SET", args...)
+	return Result{reply: reply, err: err}
+}
+
+func (c *Conn) KEYS(args ...interface{}) Result {
+	reply, err := c.Conn.Do("KEYS", args...)
 	return Result{reply: reply, err: err}
 }
 
@@ -58,10 +68,5 @@ func (c *Conn) SISMEMBER(args ...interface{}) Result {
 
 func (c *Conn) SADD(args ...interface{}) Result {
 	reply, err := c.Conn.Do("SADD", args...)
-	return Result{reply: reply, err: err}
-}
-
-func (c *Conn) Do(commandName string, args ...interface{}) Result {
-	reply, err := c.Conn.Do(commandName, args...)
 	return Result{reply: reply, err: err}
 }

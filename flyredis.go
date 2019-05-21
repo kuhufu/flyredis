@@ -14,25 +14,6 @@ var defaultPool = Pool{&redis.Pool{
 	},
 }}
 
-type Interface interface {
-	GET(args ...interface{}) Result
-	SET(args ...interface{}) Result
-
-	HGET(args ...interface{}) Result
-	HSET(args ...interface{}) Result
-	HSETNX(args ...interface{}) Result
-	HGETALL(args ...interface{}) Result
-	HVALS(args ...interface{}) Result
-	HEXISTS(args ...interface{}) Result
-	HDEL(args ...interface{}) Result
-
-	SISMEMBER(args ...interface{}) Result
-	SADD(args ...interface{}) Result
-
-	Do(commandName string, args ...interface{}) Result
-	Send(commandName string, args ...interface{}) error
-}
-
 func NewPool(pool *redis.Pool) *Pool {
 	return &Pool{pool}
 }
@@ -41,12 +22,24 @@ func Get() Conn {
 	return defaultPool.Get()
 }
 
+func Do(commandName string, args ...interface{}) Result {
+	return defaultPool.Do(commandName, args...)
+}
+
+func Send(commandName string, args ...interface{}) error {
+	return defaultPool.Send(commandName, args...)
+}
+
 func GET(args ...interface{}) Result {
 	return defaultPool.GET(args...)
 }
 
 func SET(args ...interface{}) Result {
 	return defaultPool.SET(args...)
+}
+
+func KEYS(args ...interface{}) Result {
+	return defaultPool.KEYS(args...)
 }
 
 func HGET(args ...interface{}) Result {
@@ -58,8 +51,6 @@ func HSET(args ...interface{}) Result {
 }
 
 func HSETNX(args ...interface{}) Result {
-	c := Get()
-	defer c.Close()
 	return defaultPool.HSETNX(args...)
 }
 
@@ -85,12 +76,4 @@ func SISMEMBER(args ...interface{}) Result {
 
 func SADD(args ...interface{}) Result {
 	return defaultPool.SADD(args...)
-}
-
-func Do(commandName string, args ...interface{}) Result {
-	return defaultPool.Do(commandName, args...)
-}
-
-func Send(commandName string, args ...interface{}) error {
-	return defaultPool.Send(commandName, args...)
 }

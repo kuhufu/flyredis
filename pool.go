@@ -34,6 +34,18 @@ func (p Pool) GetContext(ctx context.Context) (Conn, error) {
 	return Conn{conn}, err
 }
 
+func (p Pool) Do(commandName string, args ...interface{}) Result {
+	c := p.Get()
+	defer c.Close()
+	return c.Do(commandName, args...)
+}
+
+func (p Pool) Send(commandName string, args ...interface{}) error {
+	c := p.Get()
+	defer c.Close()
+	return c.Send(commandName, args...)
+}
+
 func (p Pool) GET(args ...interface{}) Result {
 	c := p.Get()
 	defer c.Close()
@@ -44,6 +56,12 @@ func (p Pool) SET(args ...interface{}) Result {
 	c := p.Get()
 	defer c.Close()
 	return c.SET(args...)
+}
+
+func (p Pool) KEYS(args ...interface{}) Result {
+	c := p.Get()
+	defer c.Close()
+	return c.KEYS(args...)
 }
 
 func (p Pool) HGET(args ...interface{}) Result {
@@ -98,16 +116,4 @@ func (p Pool) SADD(args ...interface{}) Result {
 	c := p.Get()
 	defer c.Close()
 	return c.SADD(args...)
-}
-
-func (p Pool) Do(commandName string, args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.Do(commandName, args...)
-}
-
-func (p Pool) Send(commandName string, args ...interface{}) error {
-	c := p.Get()
-	defer c.Close()
-	return c.Send(commandName, args...)
 }
