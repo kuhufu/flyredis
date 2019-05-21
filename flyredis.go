@@ -1,6 +1,7 @@
 package flyredis
 
 import (
+	"context"
 	"github.com/gomodule/redigo/redis"
 	"time"
 )
@@ -14,8 +15,31 @@ var defaultPool = Pool{&redis.Pool{
 	},
 }}
 
+type Opt struct {
+	Dial            func() (redis.Conn, error)
+	DialContext     func(ctx context.Context) (redis.Conn, error)
+	TestOnBorrow    func(c redis.Conn, t time.Time) error
+	MaxIdle         int
+	MaxActive       int
+	IdleTimeout     time.Duration
+	Wait            bool
+	MaxConnLifetime time.Duration
+}
+
 func NewPool(pool *redis.Pool) *Pool {
 	return &Pool{pool}
+}
+
+func NewPoolWith(opt Opt) *Pool {
+	return NewPool(&redis.Pool{
+		Dial:            opt.Dial,
+		DialContext:     opt.DialContext,
+		TestOnBorrow:    opt.TestOnBorrow,
+		MaxIdle:         opt.MaxIdle,
+		MaxActive:       opt.MaxActive,
+		Wait:            opt.Wait,
+		MaxConnLifetime: opt.MaxConnLifetime,
+	})
 }
 
 func Get() Conn {
