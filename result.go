@@ -9,7 +9,7 @@ type Result struct {
 	err   error
 }
 
-func (r Result) Interface() (interface{}, error) {
+func (r Result) Value() (interface{}, error) {
 	return r.reply, r.err
 }
 
@@ -41,6 +41,10 @@ func (r Result) StringMap() (reply map[string]string, err error) {
 	return redis.StringMap(r.reply, r.err)
 }
 
+func (r Result) Values() (reply []interface{}, err error) {
+	return redis.Values(r.reply, r.err)
+}
+
 func (r Result) Bytes() (reply []byte, err error) {
 	return redis.Bytes(r.reply, r.err)
 }
@@ -59,8 +63,4 @@ func (r Result) Float64s() (reply []float64, err error) {
 
 func (r Result) Strings() (reply []string, err error) {
 	return redis.Strings(r.reply, r.err)
-}
-
-func (r Result) Values() (reply []interface{}, err error) {
-	return redis.Values(r.reply, r.err)
 }
