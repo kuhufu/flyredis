@@ -6,23 +6,23 @@
 //redisgo
 data, err := conn.Do("GET", "key")
 //flyredis
-data, err := conn.Do("GET", "key").Interface()
+data, err := conn.Do("GET", "key").Value()
 ```
 ```go
 //redisgo
 data, err := redis.String(conn.Do("GET", "key"))
 //flyredis
-data, err := conn.DO("GET", "key").String()
+data, err := conn.Do("GET", "key").String()
 ```
 
 ```go
 //flyredis
 data, err := conn.Do("GET", "key").Bool()
 data, err := conn.Do("GET", "key").Int()
-data, err := conn.DO("GET", "key").String()
+data, err := conn.Do("GET", "key").String()
 data, err := conn.Do("HGETALL", "key").Ints()
-data, err := conn.DO("HGETALL", "key").Strings()
-data, err := conn.DO("HGETALL", "key").Values()
+data, err := conn.Do("HGETALL", "key").Strings()
+data, err := conn.Do("HGETALL", "key").Values()
 ......
 ```
 
