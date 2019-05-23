@@ -12,61 +12,50 @@ func (c *Conn) Do(commandName string, args ...interface{}) Result {
 }
 
 func (c *Conn) GET(args ...interface{}) Result {
-	reply, err := c.Conn.Do("GET", args...)
-	return Result{reply: reply, err: err}
+	return c.Do("GET", args...)
 }
 
 func (c *Conn) SET(args ...interface{}) Result {
-	reply, err := c.Conn.Do("SET", args...)
-	return Result{reply: reply, err: err}
+	return c.Do("SET", args...)
 }
 
 func (c *Conn) KEYS(args ...interface{}) Result {
-	reply, err := c.Conn.Do("KEYS", args...)
-	return Result{reply: reply, err: err}
+	return c.Do("KEYS", args...)
 }
 
 func (c *Conn) HGET(args ...interface{}) Result {
-	reply, err := c.Conn.Do("HGET", args...)
-	return Result{reply: reply, err: err}
+	return c.Do("HGET", args...)
 }
 
 func (c *Conn) HSET(args ...interface{}) Result {
-	reply, err := c.Conn.Do("HSET", args...)
-	return Result{reply: reply, err: err}
+	return c.Do("HSET", args...)
+
 }
 
 func (c *Conn) HSETNX(args ...interface{}) Result {
-	reply, err := c.Conn.Do("HSETNX", args...)
-	return Result{reply: reply, err: err}
+	return c.Do("HSETNX", args...)
 }
 
 func (c *Conn) HGETALL(args ...interface{}) Result {
-	reply, err := c.Conn.Do("HGETALL", args...)
-	return Result{reply: reply, err: err}
+	return c.Do("HGETALL", args...)
 }
 
 func (c *Conn) HVALS(args ...interface{}) Result {
-	reply, err := c.Conn.Do("HVALS", args...)
-	return Result{reply: reply, err: err}
+	return c.Do("HVALS", args...)
 }
 
 func (c *Conn) HEXISTS(args ...interface{}) Result {
-	reply, err := c.Conn.Do("HEXISTS", args...)
-	return Result{reply: reply, err: err}
+	return c.Do("HEXISTS", args...)
 }
 
 func (c *Conn) HDEL(args ...interface{}) Result {
-	reply, err := c.Conn.Do("HDEL", args...)
-	return Result{reply: reply, err: err}
+	return c.Do("HDEL", args...)
 }
 
 func (c *Conn) SISMEMBER(args ...interface{}) Result {
-	reply, err := c.Conn.Do("SISMEMBER", args...)
-	return Result{reply: reply, err: err}
+	return c.Do("SISMEMBER", args...)
 }
 
 func (c *Conn) SADD(args ...interface{}) Result {
-	reply, err := c.Conn.Do("SADD", args...)
-	return Result{reply: reply, err: err}
+	return c.Do("SADD", args...)
 }
