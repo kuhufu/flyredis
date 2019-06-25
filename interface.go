@@ -3,6 +3,7 @@ package flyredis
 type Interface interface {
 	GET(args ...interface{}) Result
 	SET(args ...interface{}) Result
+	EXPIRE(args ...interface{}) Result
 	KEYS(args ...interface{}) Result
 
 	HGET(args ...interface{}) Result

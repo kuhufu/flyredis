@@ -64,3 +64,7 @@ func (r Result) Float64s() (reply []float64, err error) {
 func (r Result) Strings() (reply []string, err error) {
 	return redis.Strings(r.reply, r.err)
 }
+
+func (r Result) Error() (err error) {
+	return r.err
+}
