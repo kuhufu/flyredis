@@ -30,16 +30,20 @@ func Send(commandName string, args ...interface{}) error {
 	return defaultPool.Send(commandName, args...)
 }
 
-func EXPIRE(args ...interface{}) Result {
-	return defaultPool.EXPIRE(args)
-}
-
 func GET(args ...interface{}) Result {
 	return defaultPool.GET(args...)
 }
 
 func SET(args ...interface{}) Result {
 	return defaultPool.SET(args...)
+}
+
+func DEL(args ...interface{}) Result {
+	return defaultPool.DEL(args...)
+}
+
+func EXPIRE(args ...interface{}) Result {
+	return defaultPool.EXPIRE(args)
 }
 
 func KEYS(args ...interface{}) Result {

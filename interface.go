@@ -1,8 +1,9 @@
 package flyredis
 
-type Interface interface {
+type RedisInterface interface {
 	GET(args ...interface{}) Result
 	SET(args ...interface{}) Result
+	DEL(args ...interface{}) Result
 	EXPIRE(args ...interface{}) Result
 	KEYS(args ...interface{}) Result
 

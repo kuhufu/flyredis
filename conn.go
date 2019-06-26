@@ -23,6 +23,10 @@ func (c *Conn) SET(args ...interface{}) Result {
 	return c.Do("SET", args...)
 }
 
+func (c *Conn) DEL(args ...interface{}) Result {
+	return c.Do("DEL", args...)
+}
+
 func (c *Conn) KEYS(args ...interface{}) Result {
 	return c.Do("KEYS", args...)
 }

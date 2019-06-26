@@ -46,12 +46,6 @@ func (p Pool) Send(commandName string, args ...interface{}) error {
 	return c.Send(commandName, args...)
 }
 
-func (p Pool) EXPIRE(args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.EXPIRE(args...)
-}
-
 func (p Pool) GET(args ...interface{}) Result {
 	c := p.Get()
 	defer c.Close()
@@ -62,6 +56,18 @@ func (p Pool) SET(args ...interface{}) Result {
 	c := p.Get()
 	defer c.Close()
 	return c.SET(args...)
+}
+
+func (p Pool) DEL(args ...interface{}) Result {
+	c := p.Get()
+	defer c.Close()
+	return c.DEL(args...)
+}
+
+func (p Pool) EXPIRE(args ...interface{}) Result {
+	c := p.Get()
+	defer c.Close()
+	return c.EXPIRE(args...)
 }
 
 func (p Pool) KEYS(args ...interface{}) Result {
