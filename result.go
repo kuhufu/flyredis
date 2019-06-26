@@ -65,6 +65,10 @@ func (r Result) Strings() (reply []string, err error) {
 	return redis.Strings(r.reply, r.err)
 }
 
+func (r Result) Reply() (reply interface{}) {
+	return r.reply
+}
+
 func (r Result) Error() (err error) {
 	return r.err
 }
