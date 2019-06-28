@@ -6,6 +6,8 @@ type Conn struct {
 	redis.Conn
 }
 
+var _ RedisInterface = (*Conn)(nil)
+
 func (c *Conn) Do(commandName string, args ...interface{}) Result {
 	reply, err := c.Conn.Do(commandName, args...)
 	return Result{reply: reply, err: err}
