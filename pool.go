@@ -49,85 +49,61 @@ func (p Pool) Send(commandName string, args ...interface{}) error {
 }
 
 func (p Pool) GET(args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.GET(args...)
+	return p.Do("GET", args...)
 }
 
 func (p Pool) SET(args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.SET(args...)
+	return p.Do("SET", args...)
 }
 
 func (p Pool) DEL(args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.DEL(args...)
+	return p.Do("DEL", args...)
 }
 
 func (p Pool) EXPIRE(args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.EXPIRE(args...)
+	return p.Do("EXPIRE", args...)
+}
+
+func (p Pool) EXISTS(args ...interface{}) Result {
+	return p.Do("EXISTS", args...)
 }
 
 func (p Pool) KEYS(args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.KEYS(args...)
+	return p.Do("KEYS", args...)
 }
 
 func (p Pool) HGET(args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.HGET(args...)
+	return p.Do("HGET", args...)
 }
 
 func (p Pool) HSET(args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.HSET(args...)
+	return p.Do("HSET", args...)
 }
 
 func (p Pool) HSETNX(args ...interface{}) Result {
-	c := Get()
-	defer c.Close()
-	return c.HSETNX(args...)
+	return p.Do("HSETNX", args...)
 }
 
 func (p Pool) HGETALL(args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.HGETALL(args...)
+	return p.Do("HGETALL", args...)
 }
 
 func (p Pool) HVALS(args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.HVALS(args...)
+	return p.Do("HVALS", args...)
 }
 
 func (p Pool) HEXISTS(args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.HEXISTS(args...)
+	return p.Do("HEXISTS", args...)
 }
 
 func (p Pool) HDEL(args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.HDEL(args...)
+	return p.Do("HDEL", args...)
 }
 
 func (p Pool) SISMEMBER(args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.SISMEMBER(args...)
+	return p.Do("SISMEMBER", args...)
 }
 
 func (p Pool) SADD(args ...interface{}) Result {
-	c := p.Get()
-	defer c.Close()
-	return c.SADD(args...)
+	return p.Do("SADD", args...)
 }
