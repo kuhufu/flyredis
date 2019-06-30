@@ -9,7 +9,7 @@ type Pool struct {
 	inner *redis.Pool
 }
 
-var _ RedisInterface = (Pool)(nil)
+var _ RedisInterface = Pool{}
 
 func (p Pool) Get() Conn {
 	return Conn{p.inner.Get()}
