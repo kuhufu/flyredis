@@ -13,6 +13,10 @@ func (c *Conn) Do(commandName string, args ...interface{}) Result {
 	return Result{reply: reply, err: err}
 }
 
+func (c *Conn) EXISTS(args ...interface{}) Result {
+	return c.Do("EXISTS", args...)
+}
+
 func (c *Conn) EXPIRE(args ...interface{}) Result {
 	return c.Do("EXPIRE", args...)
 }
