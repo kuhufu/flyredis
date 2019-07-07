@@ -18,6 +18,11 @@ func NewPool(pool *redis.Pool) *Pool {
 	return &Pool{pool}
 }
 
+func Dial(network, address string, options ...redis.DialOption) (Conn, error) {
+	conn, err := redis.Dial(network, address, options...)
+	return Conn{conn}, err
+}
+
 func Get() Conn {
 	return defaultPool.Get()
 }
