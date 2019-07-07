@@ -39,7 +39,19 @@ func TestGET(t *testing.T) {
 }
 
 func TestDEL(t *testing.T) {
-	if reply, _ := DEL(key).Int(); reply == 0 {
+	if reply, err := DEL(key).Int(); reply == 0 {
+		if err != nil {
+			log.Fatal(err)
+		}
 		log.Fatalf(`key "%v" not exist`, key)
 	}
+}
+
+func TestDial(t *testing.T) {
+	conn, err := Dial("tcp", "127.0.0.1:6379")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	fmt.Println(conn.GET(key).String())
 }
