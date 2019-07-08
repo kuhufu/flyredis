@@ -1,5 +1,5 @@
 # flyredis
-
+## 单机
 #### example
 
 ```go
@@ -52,4 +52,10 @@ pool := flyredis.NewPool(&redis.Pool{
 conn := pool.Get()
 defer conn.Close()
 data, err := conn.GET("key").String()
+```
+
+## 集群
+```go
+client := flyredis.cluster.NewClient("tcp", "127.0.0.1:7000")
+fmt.Println(client.Do("GET", "k1").String())
 ```
