@@ -59,8 +59,8 @@ func SlotNumber(key string) int {
 	return int(crc16.Checksum([]byte(key)) % REDIS_CLUSTER_SLOTS)
 }
 
-func NewClient(proc, addr string) *ClusterClient {
-	conn, err := flyredis.Dial(proc, addr)
+func NewClient(proc, addr string, options ...redis.DialOption) *ClusterClient {
+	conn, err := flyredis.Dial(proc, addr, options...)
 	defer conn.Close()
 	if err != nil {
 		return nil
