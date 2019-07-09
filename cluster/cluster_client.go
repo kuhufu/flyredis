@@ -2,12 +2,20 @@ package cluster
 
 import (
 	"errors"
+	"github.com/gomodule/redigo/redis"
 	"github.com/kuhufu/flyredis"
+	"log"
+	"strconv"
+	"sync"
+	"time"
 )
 
-type ClusterClient struct {
-	pools []*flyredis.Pool
-	nodes []ClusterNode
+type Client struct {
+	nodes    []node
+	pools    map[string]*flyredis.Pool
+	slots    [REDIS_CLUSTER_SLOTS]*flyredis.Pool
+	slotLock *sync.RWMutex
+	close    chan struct{}
 }
 
 type commandInfo struct {
@@ -59,23 +67,107 @@ var commands = map[string]commandInfo{
 	"SISMEMBER": {needHash: true},
 }
 
-func (c *ClusterClient) findNodeBySlot(slotNum int) *flyredis.Pool {
-	for i := 0; i < len(c.nodes); i++ {
-		if slotNum >= c.nodes[i].FirstSlot && slotNum <= c.nodes[i].LastSlot {
-			return c.pools[i]
+func NewClient(proc, addr string, options ...redis.DialOption) (*Client, error) {
+	conn, err := flyredis.Dial(proc, addr, options...)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	reply, err := conn.Do("cluster", "slots").Values()
+	if err != nil {
+		return nil, err
+	}
+	nodes := extractClusterSlotsInfo(reply)
+	sortNodes(nodes)
+	client := &Client{
+		nodes:    nodes,
+		pools:    map[string]*flyredis.Pool{},
+		close:    make(chan struct{}),
+		slotLock: &sync.RWMutex{},
+	}
+	client.updateClusterSlots(nodes)
+
+	go client.watchClusterSlots()
+
+	return client, nil
+}
+
+func (c *Client) Do(commandName string, args ...interface{}) flyredis.Result {
+	if len(args) < 1 {
+		return flyredis.NewResult(nil, errors.New("wrong num of args"))
+	}
+	key, ok := args[0].(string)
+	if !ok {
+		return flyredis.NewResult(nil, errors.New("wrong key type"))
+	}
+	slotNum := SlotNumber(key)
+	return c.findNodeBySlot(slotNum).Do(commandName, args...)
+}
+
+func (c *Client) findNodeBySlot(slotNum int) *flyredis.Pool {
+	c.slotLock.RLock()
+	pool := c.slots[slotNum]
+	c.slotLock.RUnlock()
+	return pool
+}
+
+func (c *Client) updateClusterSlots(nodes []node) {
+	for _, node := range nodes {
+		addr := node.master.ip + ":" + strconv.Itoa(node.master.port)
+		var pool *flyredis.Pool
+		var ok bool
+		if pool, ok = c.pools[addr]; !ok {
+			pool = flyredis.NewPool(&redis.Pool{
+				MaxIdle:     50,
+				MaxActive:   1000,
+				IdleTimeout: 50 * time.Second,
+				Dial: func() (conn redis.Conn, err error) {
+					return redis.Dial("tcp", addr)
+				},
+			})
+			c.pools[addr] = pool
 		}
+		c.slotLock.Lock()
+		for i := node.firstSlot; i <= node.lastSlot; i++ {
+			c.slots[i] = pool
+		}
+		c.slotLock.Unlock()
+	}
+}
+
+func (c *Client) fetchClusterSlots() []node {
+	for _, pool := range c.pools {
+		reply, err := pool.Do("cluster", "slots").Values()
+		if err != nil {
+			log.Println(err)
+		}
+		nodes := extractClusterSlotsInfo(reply)
+		return nodes
 	}
 	return nil
 }
 
-func (c *ClusterClient) Do(commandName string, args ...interface{}) flyredis.Result {
-	if len(args) < 1 {
-		return flyredis.Result{nil, errors.New("wrong arguments")}
+func (c *Client) watchClusterSlots() {
+	tick := time.Tick(time.Second * 2)
+	for {
+		select {
+		case <-c.close:
+			return
+		case <-tick:
+			nodes := c.fetchClusterSlots()
+			sortNodes(nodes)
+			if !nodesEqual(nodes, c.nodes) {
+				log.Println("集群发生变化，更新中")
+				log.Println("new nodes info:\n", nodes)
+				log.Println("old nodes info:\n", c.nodes)
+				c.updateClusterSlots(nodes)
+				c.nodes = nodes
+			}
+		}
 	}
-	key, ok := args[0].(string)
-	if !ok {
-		return flyredis.Result{nil, errors.New("wrong key type")}
-	}
-	slotNum := SlotNumber(key)
-	return c.findNodeBySlot(slotNum).Do(commandName, args...)
+}
+
+func (c *Client) Close() {
+	close(c.close)
 }
