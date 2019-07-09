@@ -2,13 +2,18 @@ package cluster
 
 import (
 	"fmt"
+	"log"
 	"testing"
+	"time"
 )
 
-var client = NewClient("tcp", "127.0.0.1:7000")
-
 func TestClusterClient_Do(t *testing.T) {
-	fmt.Println(client.Do("GET", "k1").String())
-	fmt.Println(client.Do("GET", "k2").String())
-	fmt.Println(client.Do("CLUSTER", "slots").Values())
+	var client, err = NewClient("tcp", "127.0.0.1:7000")
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	fmt.Println(client)
+	time.Sleep(time.Hour)
 }
