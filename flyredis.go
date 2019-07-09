@@ -14,6 +14,10 @@ var defaultPool = Pool{&redis.Pool{
 	},
 }}
 
+func NewResult(reply interface{}, err error) Result {
+	return Result{reply: reply, err: err}
+}
+
 func NewPool(pool *redis.Pool) *Pool {
 	return &Pool{pool}
 }
