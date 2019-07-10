@@ -230,6 +230,7 @@ func (c *Client) getOrAddPool(address string) (pool *flyredis.Pool) {
 	c.poolsLock.RLock()
 	pool, ok := c.pools[address]
 	if !ok {
+		c.poolsLock.RUnlock()
 		c.poolsLock.Lock()
 		pool = newPool("tcp", address, c.dialOption...)
 		c.pools[address] = pool
