@@ -1,7 +1,6 @@
 package cluster
 
 import (
-	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/kuhufu/flyredis"
 	"regexp"
@@ -20,8 +19,10 @@ var pool = flyredis.NewPool(&redis.Pool{
 })
 
 func TestGetClusterSlotsInfo(t *testing.T) {
-	reply, _ := pool.Do("cluster", "slots").Values()
-	fmt.Println(extractClusterSlotsInfo(reply))
+	_, err := pool.Do("cluster", "slots").Values()
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestSlotNumber(t *testing.T) {
@@ -33,11 +34,6 @@ func TestSlotNumber(t *testing.T) {
 	if SlotNumber(key) != slotNum {
 		t.Error("not match redis slot number")
 	}
-}
-
-func TestGet(t *testing.T) {
-	fmt.Println(pool.GET("k1").String())
-	fmt.Println(pool.GET("k2").String())
 }
 
 func TestNodeEqual(t *testing.T) {
