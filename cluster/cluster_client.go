@@ -6,16 +6,19 @@ import (
 	"github.com/kuhufu/flyredis"
 	"log"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
 
 type Client struct {
-	nodes    []node
-	pools    map[string]*flyredis.Pool
-	slots    [REDIS_CLUSTER_SLOTS]*flyredis.Pool
-	slotLock *sync.RWMutex
-	close    chan struct{}
+	nodes      []node
+	pools      map[string]*flyredis.Pool
+	poolsLock  *sync.RWMutex
+	slots      [REDIS_CLUSTER_SLOTS]*flyredis.Pool
+	slotLock   *sync.RWMutex
+	close      chan struct{}
+	dialOption []redis.DialOption
 }
 
 type commandInfo struct {
@@ -67,28 +70,30 @@ var commands = map[string]commandInfo{
 	"SISMEMBER": {needHash: true},
 }
 
-func NewClient(proc, addr string, options ...redis.DialOption) (*Client, error) {
-	conn, err := flyredis.Dial(proc, addr, options...)
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
+func NewClient(network, address string, options ...redis.DialOption) (*Client, error) {
+	pool := newPool(network, address, options...)
 
-	reply, err := conn.Do("cluster", "slots").Values()
+	reply, err := pool.Do("cluster", "slots").Values()
 	if err != nil {
 		return nil, err
 	}
 	nodes := extractClusterSlotsInfo(reply)
 	sortNodes(nodes)
 	client := &Client{
-		nodes:    nodes,
-		pools:    map[string]*flyredis.Pool{},
-		close:    make(chan struct{}),
-		slotLock: &sync.RWMutex{},
+		nodes:      nodes,
+		pools:      map[string]*flyredis.Pool{},
+		poolsLock:  &sync.RWMutex{},
+		close:      make(chan struct{}),
+		slotLock:   &sync.RWMutex{},
+		dialOption: options,
 	}
+	client.pools[address] = pool
+
+	//在新建客户端时获取一次集群信息
 	client.updateClusterSlots(nodes)
 
-	go client.watchClusterSlots()
+	//TODO 是否需要定期更新集群信息？还是采用惰性更新，在redis 响应 MOVED消息时才更新？
+	//go client.watchClusterSlots()
 
 	return client, nil
 }
@@ -101,33 +106,61 @@ func (c *Client) Do(commandName string, args ...interface{}) flyredis.Result {
 	if !ok {
 		return flyredis.NewResult(nil, errors.New("wrong key type"))
 	}
+
 	slotNum := SlotNumber(key)
-	return c.findNodeBySlot(slotNum).Do(commandName, args...)
+	isNil := false
+	var pool = c.GetPoolBySlot(slotNum)
+	if pool == nil {
+		isNil = true
+		var err error
+		pool, err = c.randPool()
+		if err != nil {
+			return flyredis.NewResult(nil, err)
+		}
+	}
+
+	result := pool.Do(commandName, args...)
+	err := result.Error()
+	if err != nil && isRedirect(err) {
+		parts := strings.Split(err.Error(), " ")
+		msgType, redirectAddr := parts[0], parts[2]
+
+		redirectPool := c.getOrAddPool(redirectAddr)
+		conn := redirectPool.Get()
+		defer conn.Close()
+
+		switch msgType {
+		case "MOVED":
+			c.SetPoolBySlot(slotNum, redirectPool)
+		case "ASK":
+			conn.Do("ASKING")
+		}
+		return conn.Do(commandName, args...)
+	} else {
+		if isNil {
+			c.SetPoolBySlot(slotNum, pool)
+		}
+		return result
+	}
 }
 
-func (c *Client) findNodeBySlot(slotNum int) *flyredis.Pool {
+func (c *Client) GetPoolBySlot(slotNum int) *flyredis.Pool {
 	c.slotLock.RLock()
 	pool := c.slots[slotNum]
 	c.slotLock.RUnlock()
 	return pool
 }
 
+func (c *Client) SetPoolBySlot(slotNum int, pool *flyredis.Pool) {
+	c.slotLock.Lock()
+	c.slots[slotNum] = pool
+	c.slotLock.Unlock()
+}
+
 func (c *Client) updateClusterSlots(nodes []node) {
 	for _, node := range nodes {
 		addr := node.master.ip + ":" + strconv.Itoa(node.master.port)
-		var pool *flyredis.Pool
-		var ok bool
-		if pool, ok = c.pools[addr]; !ok {
-			pool = flyredis.NewPool(&redis.Pool{
-				MaxIdle:     50,
-				MaxActive:   1000,
-				IdleTimeout: 50 * time.Second,
-				Dial: func() (conn redis.Conn, err error) {
-					return redis.Dial("tcp", addr)
-				},
-			})
-			c.pools[addr] = pool
-		}
+		pool := c.getOrAddPool(addr)
 		c.slotLock.Lock()
 		for i := node.firstSlot; i <= node.lastSlot; i++ {
 			c.slots[i] = pool
@@ -170,4 +203,47 @@ func (c *Client) watchClusterSlots() {
 
 func (c *Client) Close() {
 	close(c.close)
+}
+
+func newPool(network, address string, options ...redis.DialOption) *flyredis.Pool {
+	return flyredis.NewPool(&redis.Pool{
+		MaxIdle:     50,
+		MaxActive:   1000,
+		IdleTimeout: 50 * time.Second,
+		Dial: func() (conn redis.Conn, err error) {
+			return redis.Dial(network, address, options...)
+		},
+	})
+}
+
+func (c *Client) randPool() (*flyredis.Pool, error) {
+	c.poolsLock.RLock()
+	for _, pool := range c.pools {
+		c.poolsLock.RUnlock()
+		return pool, nil
+	}
+	c.poolsLock.RUnlock()
+	return nil, errors.New("the pools is empty")
+}
+
+func (c *Client) getOrAddPool(address string) (pool *flyredis.Pool) {
+	c.poolsLock.RLock()
+	pool, ok := c.pools[address]
+	if !ok {
+		c.poolsLock.Lock()
+		pool = newPool("tcp", address, c.dialOption...)
+		c.pools[address] = pool
+		c.poolsLock.Unlock()
+	} else {
+		c.poolsLock.RUnlock()
+	}
+	return
+}
+
+func isRedirect(err error) bool {
+	errStr := err.Error()
+	if strings.HasPrefix(errStr, "MOVED") || strings.HasPrefix(errStr, "ASK") {
+		return true
+	}
+	return false
 }
