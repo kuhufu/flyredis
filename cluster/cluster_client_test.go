@@ -29,8 +29,8 @@ func TestClient_Do_GET(t *testing.T) {
 	}
 
 	for i := 0; i < 50000; i++ {
-		if res, _ := c.Do("GET", strconv.Itoa(i)).Int(); res != i {
-			t.Error()
+		if res, err := c.Do("GET", strconv.Itoa(i)).Int(); res != i {
+			t.Error("key:", i, "error:", err)
 		}
 	}
 }

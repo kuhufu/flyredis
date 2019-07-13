@@ -26,13 +26,23 @@ func TestGetClusterSlotsInfo(t *testing.T) {
 }
 
 func TestSlotNumber(t *testing.T) {
-	key := "{k2}:key"
-	slotNum, err := pool.Do("CLUSTER", "KEYSLOT", key).Int()
-	if err != nil {
-		t.Fatal(err)
+	tests := []struct {
+		name string
+		in   string
+		want bool
+	}{
+		{name: "{in}.name", in: "{in}.name", want: true},
+		{name: "{{in}}.name", in: "{{in}}.name", want: true},
+		{name: "{in}}.name", in: "{in}}.name", want: true},
 	}
-	if SlotNumber(key) != slotNum {
-		t.Error("not match redis slot number")
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			num, _ := pool.Do("CLUSTER", "KEYSLOT", test.in).Int()
+			myNum := SlotNumber(test.in)
+			if num != myNum {
+				t.Errorf("redis:%v, my:%v\n", num, myNum)
+			}
+		})
 	}
 }
 
@@ -60,10 +70,10 @@ func TestHashTag(t *testing.T) {
 		key  string
 		want string
 	}{
-		{key: "{user}:key", want: "user"},
-		{key: "{user:key", want: "{user:key"},
-		{key: "user}:key", want: "user}:key"},
-		{key: "{user}:{key}", want: "user"},
+		{key: "{user}:in", want: "user"},
+		{key: "{user:in", want: "{user:in"},
+		{key: "user}:in", want: "user}:in"},
+		{key: "{user}:{in}", want: "user"},
 	}
 	for _, test := range tests {
 		key := test.key
@@ -77,7 +87,7 @@ func TestHashTag(t *testing.T) {
 }
 
 func TestHashTag3(t *testing.T) {
-	key := `{user}:key`
+	key := `{user}:in`
 	a := strings.Index(key, "{")
 	c := strings.Index(key, "}")
 
@@ -89,10 +99,10 @@ func TestHashTag3(t *testing.T) {
 		key  string
 		want string
 	}{
-		{key: "{user}:key", want: "user"},
-		{key: "{user:key", want: "{user:key"},
-		{key: "user}:key", want: "user}:key"},
-		{key: "{user}:{key}", want: "user"},
+		{key: "{user}:in", want: "user"},
+		{key: "{user:in", want: "{user:in"},
+		{key: "user}:in", want: "user}:in"},
+		{key: "{user}:{in}", want: "user"},
 	}
 	for _, test := range tests {
 		key := test.key
@@ -110,7 +120,7 @@ func TestHashTag3(t *testing.T) {
 //BenchmarkFoo-8    	30000000	        60.4 ns/op
 //BenchmarkFoo3-8   	100000000	        13.6 ns/op
 func BenchmarkFoo(b *testing.B) {
-	key := `{user}:key`
+	key := `{user}:in`
 	for i := 0; i < b.N; i++ {
 		if r.MatchString(key) {
 			key = strings.Trim(r.FindString(key), "{}")
@@ -119,7 +129,7 @@ func BenchmarkFoo(b *testing.B) {
 }
 
 func BenchmarkFoo3(b *testing.B) {
-	key := `{user}:key`
+	key := `{user}:in`
 	for i := 0; i < b.N; i++ {
 		a := strings.Index(key, "{")
 		c := strings.Index(key, "}")
