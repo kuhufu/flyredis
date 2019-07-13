@@ -113,35 +113,35 @@ func (c *Client) Do(commandName string, args ...interface{}) flyredis.Result {
 	if pool == nil {
 		isNil = true
 		var err error
-		pool, err = c.randPool()
-		if err != nil {
+		if pool, err = c.randPool(); err != nil {
 			return flyredis.NewResult(nil, err)
 		}
 	}
 
 	result := pool.Do(commandName, args...)
 	err := result.Error()
-	if err != nil && isRedirect(err) {
-		parts := strings.Split(err.Error(), " ")
-		msgType, redirectAddr := parts[0], parts[2]
-
-		redirectPool := c.getOrAddPool(redirectAddr)
-		conn := redirectPool.Get()
-		defer conn.Close()
-
-		switch msgType {
-		case "MOVED":
-			c.SetPoolBySlot(slotNum, redirectPool)
-		case "ASK":
-			conn.Do("ASKING")
-		}
-		return conn.Do(commandName, args...)
-	} else {
+	if !isRedirectErr(err) {
 		if isNil {
 			c.SetPoolBySlot(slotNum, pool)
 		}
 		return result
 	}
+
+	//处理 MOVED 和 ASK 重定向
+	parts := strings.Split(err.Error(), " ")
+	msgType, redirectAddr := parts[0], parts[2]
+	redirectPool := c.getOrAddPool(redirectAddr)
+	conn := redirectPool.Get()
+	switch msgType {
+	case "MOVED":
+		c.SetPoolBySlot(slotNum, redirectPool)
+	case "ASK":
+		conn.Do("ASKING")
+	}
+
+	result = conn.Do(commandName, args...)
+	conn.Close()
+	return result
 }
 
 func (c *Client) GetPoolBySlot(slotNum int) *flyredis.Pool {
@@ -241,7 +241,10 @@ func (c *Client) getOrAddPool(address string) (pool *flyredis.Pool) {
 	return
 }
 
-func isRedirect(err error) bool {
+func isRedirectErr(err error) bool {
+	if err == nil {
+		return false
+	}
 	errStr := err.Error()
 	if strings.HasPrefix(errStr, "MOVED") || strings.HasPrefix(errStr, "ASK") {
 		return true
