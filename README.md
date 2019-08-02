@@ -28,24 +28,18 @@ data, err := conn.Do("HGETALL", "key").Values()
 
 ```go
 //flyredis
-data, err := conn.GET("key")
+data, err := conn.GET("key").String()
 data, err := conn.SET("key", "value")
 data, err := conn.HGET("key", "field")
 data, err := conn.HSET("key", "filed", "value")
 ```
 
-### 注意
-flyredis 有一个内置的 redis连接池 只连接本地 `127.0.0.1:6379` 的无密码 redis 服务，方便开发测试。
-
-在生产环境中请使用如下方式
+### 连接池
 ```go
-pool := flyredis.NewPool(&redis.Pool{
-    MaxIdle:     50,
-    MaxActive:   1000,
-    IdleTimeout: 30 * time.Second,
-    Dial: func() (conn redis.Conn, err error) {
-        return redis.Dial("tcp", "127.0.0.1:6379")
-    },
+var pool = flyredis.NewPool("tcp", "127.0.0.1:7000", flyredis.Option{
+	MaxIdle:     10,
+	MaxActive:   20,
+	IdleTimeout: 20 * time.Second,
 })
 ```
 ```go
