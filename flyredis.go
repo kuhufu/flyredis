@@ -13,8 +13,10 @@ type Option struct {
 	MaxConnLifetime time.Duration
 	Password        string
 	TestOnBorrow    func(c redis.Conn, t time.Time) error
-	DialOptions     []redis.DialOption
+	DialOptions     []DialOption
 }
+
+type DialOption = redis.DialOption
 
 func NewResult(reply interface{}, err error) Result {
 	return Result{reply: reply, err: err}
@@ -22,10 +24,7 @@ func NewResult(reply interface{}, err error) Result {
 
 func NewPool(network, address string, option Option) *Pool {
 	dialFunc := func() (redis.Conn, error) {
-		if option.Password != "" {
-			option.DialOptions = append(option.DialOptions, redis.DialPassword(option.Password))
-		}
-		return redis.Dial(network, address, option.DialOptions...)
+		return redis.Dial(network, address, append(option.DialOptions, redis.DialPassword(option.Password))...)
 	}
 
 	if option.TestOnBorrow == nil {
