@@ -1,7 +1,6 @@
 package cluster
 
 import (
-	"github.com/gomodule/redigo/redis"
 	"github.com/kuhufu/flyredis"
 	"regexp"
 	"strings"
@@ -9,13 +8,10 @@ import (
 	"time"
 )
 
-var pool = flyredis.NewPool(&redis.Pool{
-	MaxIdle:     50,
-	MaxActive:   1000,
-	IdleTimeout: 10 * time.Second,
-	Dial: func() (conn redis.Conn, err error) {
-		return redis.Dial("tcp", "127.0.0.1:7000")
-	},
+var pool = flyredis.NewPool("tcp", "127.0.0.1:7000", flyredis.Option{
+	MaxIdle:     10,
+	MaxActive:   20,
+	IdleTimeout: 20 * time.Second,
 })
 
 func TestGetClusterSlotsInfo(t *testing.T) {

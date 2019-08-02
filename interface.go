@@ -2,11 +2,8 @@ package flyredis
 
 type RedisInterface interface {
 	KeyCommand
-
 	StringCommand
-
 	HashCommand
-
 	SetCommand
 
 	Do(commandName string, args ...interface{}) Result

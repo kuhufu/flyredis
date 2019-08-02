@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"errors"
-	"github.com/gomodule/redigo/redis"
 	"github.com/kuhufu/flyredis"
 	"log"
 	"strconv"
@@ -18,7 +17,7 @@ type Client struct {
 	slots      [REDIS_CLUSTER_SLOTS]*flyredis.Pool
 	slotLock   *sync.RWMutex
 	close      chan struct{}
-	dialOption []redis.DialOption
+	dialOption flyredis.Option
 }
 
 type commandInfo struct {
@@ -70,8 +69,8 @@ var commands = map[string]commandInfo{
 	"SISMEMBER": {needHash: true},
 }
 
-func NewClient(network, address string, options ...redis.DialOption) (*Client, error) {
-	pool := newPool(network, address, options...)
+func NewClient(network, address string, option flyredis.Option) (*Client, error) {
+	pool := newPool(network, address, option)
 
 	reply, err := pool.Do("cluster", "slots").Values()
 	if err != nil {
@@ -85,7 +84,7 @@ func NewClient(network, address string, options ...redis.DialOption) (*Client, e
 		poolsLock:  &sync.RWMutex{},
 		close:      make(chan struct{}),
 		slotLock:   &sync.RWMutex{},
-		dialOption: options,
+		dialOption: option,
 	}
 	client.pools[address] = pool
 
@@ -205,15 +204,8 @@ func (c *Client) Close() {
 	close(c.close)
 }
 
-func newPool(network, address string, options ...redis.DialOption) *flyredis.Pool {
-	return flyredis.NewPool(&redis.Pool{
-		MaxIdle:     50,
-		MaxActive:   1000,
-		IdleTimeout: 50 * time.Second,
-		Dial: func() (conn redis.Conn, err error) {
-			return redis.Dial(network, address, options...)
-		},
-	})
+func newPool(network, address string, option flyredis.Option) *flyredis.Pool {
+	return flyredis.NewPool(network, address, option)
 }
 
 func (c *Client) randPool() (*flyredis.Pool, error) {
@@ -232,7 +224,7 @@ func (c *Client) getOrAddPool(address string) (pool *flyredis.Pool) {
 	if !ok {
 		c.poolsLock.RUnlock()
 		c.poolsLock.Lock()
-		pool = newPool("tcp", address, c.dialOption...)
+		pool = newPool("tcp", address, c.dialOption)
 		c.pools[address] = pool
 		c.poolsLock.Unlock()
 	} else {

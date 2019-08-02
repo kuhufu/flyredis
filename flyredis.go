@@ -5,92 +5,46 @@ import (
 	"time"
 )
 
-var defaultPool = Pool{&redis.Pool{
-	MaxIdle:     50,
-	MaxActive:   1000,
-	IdleTimeout: 30 * time.Second,
-	Dial: func() (conn redis.Conn, err error) {
-		return redis.Dial("tcp", "127.0.0.1:6379")
-	},
-}}
+type Option struct {
+	MaxIdle int
+	MaxActive int
+	IdleTimeout time.Duration
+	Wait bool
+	MaxConnLifetime time.Duration
+	Password string
+}
 
 func NewResult(reply interface{}, err error) Result {
 	return Result{reply: reply, err: err}
 }
 
-func NewPool(pool *redis.Pool) *Pool {
-	return &Pool{pool}
+func NewPool(network, address string, option Option) *Pool {
+	return &Pool{&redis.Pool{
+		MaxIdle:         option.MaxIdle,
+		MaxActive:       option.MaxActive,
+		IdleTimeout:     option.IdleTimeout,
+		Wait:            option.Wait,
+		MaxConnLifetime: option.MaxConnLifetime,
+		TestOnBorrow: func(c redis.Conn, t time.Time) error {
+			_, err := c.Do("PING")
+			return err
+		},
+		Dial: func() (redis.Conn, error) {
+			return dial(network, address, option.Password)
+		},
+	}}
 }
 
-func Dial(network, address string, options ...redis.DialOption) (Conn, error) {
-	conn, err := redis.Dial(network, address, options...)
-	return Conn{conn}, err
-}
-
-func Get() Conn {
-	return defaultPool.Get()
-}
-
-func Do(commandName string, args ...interface{}) Result {
-	return defaultPool.Do(commandName, args...)
-}
-
-func Send(commandName string, args ...interface{}) error {
-	return defaultPool.Send(commandName, args...)
-}
-
-func GET(args ...interface{}) Result {
-	return defaultPool.GET(args...)
-}
-
-func SET(args ...interface{}) Result {
-	return defaultPool.SET(args...)
-}
-
-func DEL(args ...interface{}) Result {
-	return defaultPool.DEL(args...)
-}
-
-func EXPIRE(args ...interface{}) Result {
-	return defaultPool.EXPIRE(args)
-}
-
-func KEYS(args ...interface{}) Result {
-	return defaultPool.KEYS(args...)
-}
-
-func HGET(args ...interface{}) Result {
-	return defaultPool.HGET(args...)
-}
-
-func HSET(args ...interface{}) Result {
-	return defaultPool.HSET(args...)
-}
-
-func HSETNX(args ...interface{}) Result {
-	return defaultPool.HSETNX(args...)
-}
-
-func HGETALL(args ...interface{}) Result {
-	return defaultPool.HGETALL(args...)
-}
-
-func HVALS(args ...interface{}) Result {
-	return defaultPool.HVALS(args...)
-}
-
-func HEXISTS(args ...interface{}) Result {
-	return defaultPool.HEXISTS(args...)
-}
-
-func HDEL(args ...interface{}) Result {
-	return defaultPool.HDEL(args...)
-}
-
-func SISMEMBER(args ...interface{}) Result {
-	return defaultPool.SISMEMBER(args...)
-}
-
-func SADD(args ...interface{}) Result {
-	return defaultPool.SADD(args...)
+func dial(network, address, password string) (redis.Conn, error) {
+	c, err := redis.Dial(network, address)
+	if err != nil {
+		return nil, err
+	}
+	if password != "" {
+		if _, err := c.Do("AUTH", password); err != nil {
+			c.Close()
+			return nil, err
+		}
+	}
+	return c, err
 }
