@@ -6,12 +6,14 @@ import (
 )
 
 type Option struct {
-	MaxIdle int
-	MaxActive int
-	IdleTimeout time.Duration
-	Wait bool
+	MaxIdle         int
+	MaxActive       int
+	IdleTimeout     time.Duration
+	Wait            bool
 	MaxConnLifetime time.Duration
-	Password string
+	Password        string
+	TestOnBorrow    func(c redis.Conn, t time.Time) error
+	DialOptions     []redis.DialOption
 }
 
 func NewResult(reply interface{}, err error) Result {
@@ -19,32 +21,27 @@ func NewResult(reply interface{}, err error) Result {
 }
 
 func NewPool(network, address string, option Option) *Pool {
+	dialFunc := func() (redis.Conn, error) {
+		if option.Password != "" {
+			option.DialOptions = append(option.DialOptions, redis.DialPassword(option.Password))
+		}
+		return redis.Dial(network, address, option.DialOptions...)
+	}
+
+	if option.TestOnBorrow == nil {
+		option.TestOnBorrow = func(c redis.Conn, t time.Time) error {
+			_, err := c.Do("PING")
+			return err
+		}
+	}
+
 	return &Pool{&redis.Pool{
 		MaxIdle:         option.MaxIdle,
 		MaxActive:       option.MaxActive,
 		IdleTimeout:     option.IdleTimeout,
 		Wait:            option.Wait,
 		MaxConnLifetime: option.MaxConnLifetime,
-		TestOnBorrow: func(c redis.Conn, t time.Time) error {
-			_, err := c.Do("PING")
-			return err
-		},
-		Dial: func() (redis.Conn, error) {
-			return dial(network, address, option.Password)
-		},
+		TestOnBorrow:    option.TestOnBorrow,
+		Dial:            dialFunc,
 	}}
-}
-
-func dial(network, address, password string) (redis.Conn, error) {
-	c, err := redis.Dial(network, address)
-	if err != nil {
-		return nil, err
-	}
-	if password != "" {
-		if _, err := c.Do("AUTH", password); err != nil {
-			c.Close()
-			return nil, err
-		}
-	}
-	return c, err
 }
