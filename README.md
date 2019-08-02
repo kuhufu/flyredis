@@ -53,3 +53,5 @@ data, err := conn.GET("key").String()
 client := flyredis.cluster.NewClient("tcp", "127.0.0.1:7000")
 fmt.Println(client.Do("GET", "k1").String())
 ```
+
+## 注意
