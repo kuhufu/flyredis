@@ -27,13 +27,6 @@ func NewPool(network, address string, option Option) *Pool {
 		return redis.Dial(network, address, append(option.DialOptions, redis.DialPassword(option.Password))...)
 	}
 
-	if option.TestOnBorrow == nil {
-		option.TestOnBorrow = func(c redis.Conn, t time.Time) error {
-			_, err := c.Do("PING")
-			return err
-		}
-	}
-
 	return &Pool{&redis.Pool{
 		MaxIdle:         option.MaxIdle,
 		MaxActive:       option.MaxActive,
