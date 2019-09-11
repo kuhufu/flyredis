@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+type DialOption = redis.DialOption
+
 //因为Option中Password字段的存在，这个函数失去了意义
 //func DialPassword(password string) DialOption {
 //	return redis.DialPassword(password)

@@ -16,8 +16,6 @@ type Option struct {
 	DialOptions     []DialOption
 }
 
-type DialOption = redis.DialOption
-
 func NewResult(reply interface{}, err error) Result {
 	return Result{reply: reply, err: err}
 }
