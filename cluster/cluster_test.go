@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"fmt"
 	"github.com/kuhufu/flyredis"
 	"regexp"
 	"strings"
@@ -8,17 +9,20 @@ import (
 	"time"
 )
 
-var pool = flyredis.NewPool("tcp", "127.0.0.1:7000", flyredis.Option{
+var pool = flyredis.NewPool("tcp", "47.115.179.47:7000", flyredis.Option{
 	MaxIdle:     10,
 	MaxActive:   20,
 	IdleTimeout: 20 * time.Second,
 })
 
 func TestGetClusterSlotsInfo(t *testing.T) {
-	_, err := pool.Do("cluster", "slots").Values()
+	v, err := pool.Do("cluster", "slots").Values()
 	if err != nil {
 		t.Error(err)
 	}
+
+	fmt.Printf("%10v:%v\n", "ip", string(v[0].([]interface{})[2].([]interface{})[0].([]uint8)))
+	fmt.Printf("%10v:%v\n", "master_id", string(v[0].([]interface{})[2].([]interface{})[2].([]uint8)))
 }
 
 func TestSlotNumber(t *testing.T) {
